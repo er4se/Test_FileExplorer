@@ -11,43 +11,80 @@ namespace Test_FileExplorer
     {
         private string startDirectory = string.Empty;
         private Regex fileNameRegex = new Regex(string.Empty);
-        private bool searching;
+        private int searchingStatusCode = 0;
 
         public MainForm()
         {
             InitializeComponent();
+            Helper.EnableDoubleBuffering(filesTreeView);
         }
 
         private void searchButton_Click(object sender, EventArgs e)
         {
-            if (!searching && (startDirectoryTextBox.Text != String.Empty))
+            if ((searchingStatusCode == 0) && (startDirectoryTextBox.Text != String.Empty))
             {
                 startDirectory = startDirectoryTextBox.Text;
                 fileNameRegex = new Regex(fileNameRegexTextBox.Text);
-                searching = true;
+                searchingStatusCode = 1;
 
                 // Clear previous search results
-                filesTreeView.Nodes.Clear();
-                searchStatusLabel.Text = "Searching...";
-                foundFilesCountLabel.Text = "";
-                totalFilesCountLabel.Text = "";
-                elapsedTimeLabel.Text = "";
+                ClearFormView();
 
-                // Start search in a separate thread
+                // Switch buttons availible
+                searchButton.Enabled = false;    //Search - x
+                pauseButton.Enabled = true;      //Pause  - v
+                resumeButton.Enabled = false;    //Resume - x
+                abortButton.Enabled = false;     //Abort  - x
+
+                // Start search and timer in a separated threads
                 Thread searchThread = new Thread(SearchFiles);
+                searchThread.IsBackground = true;
                 searchThread.Start();
+
+                Thread timerThread = new Thread(TimerHandler);
+                timerThread.IsBackground = true;
+                timerThread.Start();
             }
             else
             {
-                searching = false;
+                searchingStatusCode = 0;
             }
+        }
+
+        private void pauseButton_Click(object sender, EventArgs e)
+        {
+            searchButton.Enabled = false;    //Search - x
+            pauseButton.Enabled = false;     //Pause  - x
+            resumeButton.Enabled = true;     //Resume - v
+            abortButton.Enabled = true;      //Abort  - v
+
+            searchingStatusCode = 2;
+        }
+
+        private void abortButton_Click(object sender, EventArgs e)
+        {
+            searchButton.Enabled = true;     //Search - v
+            pauseButton.Enabled = false;     //Pause  - x
+            resumeButton.Enabled = false;    //Resume - x
+            abortButton.Enabled = false;     //Abort  - x
+
+            searchingStatusCode = 0;
+        }
+
+        private void resumeButtin_Click(object sender, EventArgs e)
+        {
+            searchButton.Enabled = false;    //Search - x
+            pauseButton.Enabled = true;      //Pause  - v
+            resumeButton.Enabled = false;    //Resume - x
+            abortButton.Enabled = false;     //Abort  - x
+
+            searchingStatusCode = 1;
         }
 
         private void SearchFiles()
         {
             int foundFilesCount = 0;
             int totalFilesCount = 0;
-            DateTime startTime = DateTime.Now;
 
             try
             {
@@ -62,8 +99,13 @@ namespace Test_FileExplorer
                 Queue<TreeNode> directories = new Queue<TreeNode>();
                 directories.Enqueue(rootNode);
 
-                while (directories.Count > 0 && searching)
+                while ((searchingStatusCode != 0) && directories.Count > 0)
                 {
+                    while (searchingStatusCode == 2)
+                    {
+                        Thread.Sleep(100);
+                    }
+
                     TreeNode currentDirNode = directories.Dequeue();
                     DirectoryInfo currentDir = new DirectoryInfo(currentDirNode.Name);
 
@@ -95,41 +137,102 @@ namespace Test_FileExplorer
                             }
                         }
 
-                        UpdateSearchStatus(currentDir.FullName, foundFilesCount, totalFilesCount, startTime);
+                        UpdateSearchStatus(currentDir.FullName, foundFilesCount, totalFilesCount);
                     }
                     catch (UnauthorizedAccessException)
                     {
-                        // Access to directory denied, continue with next directory
+                        //Системная ошибка 5. Отказано в доступе
+                        continue;
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        //При срочном закрытии программы во время выполнения поиска, процессор не успевает обработать Dequeue
                         continue;
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("An error occurred: " + ex.Message);
-                        searching = false;
+                        searchingStatusCode = 0;
+
+                        Invoke(new Action(() =>
+                        {
+                            ClearFormView();
+                        }));
+
+                        MessageBox.Show("Случилась непредвиденная ошибка: " + ex.Message);
+
+                        Invoke(new Action(() =>
+                        {
+                            elapsedTimeLabel.Text = "Времени прошло: ";
+                        }));
+
                         break;
                     }
                 }
 
-                UpdateSearchStatus("", foundFilesCount, totalFilesCount, startTime);
+                UpdateSearchStatus(String.Empty, foundFilesCount, totalFilesCount);
+                MessageBox.Show("Поиск завершен!");
             }
             finally
             {
-                searching = false;
+                searchingStatusCode = 0;
             }
         }
 
-        private void UpdateSearchStatus(string currentDirectory, int foundFilesCount, int totalFilesCount, DateTime startTime)
+        private void TimerHandler()
+        {
+            DateTime startTime = DateTime.Now;
+
+            while (searchingStatusCode != 0)
+            {
+                while (searchingStatusCode == 2)
+                {
+                    startTime = startTime.AddMilliseconds(100);
+                    Thread.Sleep(100);
+                }
+
+                Thread.Sleep(25);
+                UpdateElapsedTime(startTime);
+            }
+
+            UpdateElapsedTime(startTime);
+        }
+
+        private void UpdateSearchStatus(string currentDirectory, int foundFilesCount, int totalFilesCount)
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new Action(() => UpdateSearchStatus(currentDirectory, foundFilesCount, totalFilesCount, startTime)));
+                BeginInvoke(new Action(() => UpdateSearchStatus(currentDirectory, foundFilesCount, totalFilesCount)));
                 return;
             }
 
-            searchStatusLabel.Text = "Current Directory: " + currentDirectory;
-            foundFilesCountLabel.Text = "Found Files: " + foundFilesCount;
-            totalFilesCountLabel.Text = "Total Files: " + totalFilesCount;
-            elapsedTimeLabel.Text = "Elapsed Time: " + (DateTime.Now - startTime);
+            searchStatusLabel.Text = "Текущая директория: " + currentDirectory;
+            foundFilesCountLabel.Text = "Найдено файлов: " + foundFilesCount;
+            totalFilesCountLabel.Text = "Всего файлов: " + totalFilesCount;
+        }
+
+        private void UpdateElapsedTime(DateTime startTime)
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action(() => UpdateElapsedTime(startTime)));
+                return;
+            }
+
+            elapsedTimeLabel.Text = "Времени прошло: " + (DateTime.Now - startTime);
+        }
+
+        private void ClearFormView()
+        {
+            filesTreeView.Nodes.Clear();
+            searchStatusLabel.Text = "Поиск...";
+            foundFilesCountLabel.Text = "";
+            totalFilesCountLabel.Text = "";
+            elapsedTimeLabel.Text = "";
+
+            searchButton.Enabled = true;     //Search - v
+            pauseButton.Enabled = false;     //Pause  - x
+            resumeButton.Enabled = false;    //Resume - x
+            abortButton.Enabled = false;     //Abort  - x
         }
     }
 }
