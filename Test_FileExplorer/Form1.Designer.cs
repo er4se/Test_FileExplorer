@@ -38,6 +38,9 @@
             this.totalFilesCountLabel = new System.Windows.Forms.Label();
             this.elapsedTimeLabel = new System.Windows.Forms.Label();
             this.searchButton = new System.Windows.Forms.Button();
+            this.pauseButton = new System.Windows.Forms.Button();
+            this.abortButton = new System.Windows.Forms.Button();
+            this.resumeButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // filesTreeView
@@ -75,14 +78,14 @@
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(329, 62);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(55, 15);
+            this.label2.Size = new System.Drawing.Size(194, 15);
             this.label2.TabIndex = 4;
-            this.label2.Text = "Шаблон:";
+            this.label2.Text = "Шаблон регулярного выражения:";
             // 
             // searchStatusLabel
             // 
             this.searchStatusLabel.AutoSize = true;
-            this.searchStatusLabel.Location = new System.Drawing.Point(329, 171);
+            this.searchStatusLabel.Location = new System.Drawing.Point(329, 199);
             this.searchStatusLabel.Name = "searchStatusLabel";
             this.searchStatusLabel.Size = new System.Drawing.Size(127, 15);
             this.searchStatusLabel.TabIndex = 5;
@@ -91,7 +94,7 @@
             // foundFilesCountLabel
             // 
             this.foundFilesCountLabel.AutoSize = true;
-            this.foundFilesCountLabel.Location = new System.Drawing.Point(329, 196);
+            this.foundFilesCountLabel.Location = new System.Drawing.Point(329, 224);
             this.foundFilesCountLabel.Name = "foundFilesCountLabel";
             this.foundFilesCountLabel.Size = new System.Drawing.Size(117, 15);
             this.foundFilesCountLabel.TabIndex = 6;
@@ -100,7 +103,7 @@
             // totalFilesCountLabel
             // 
             this.totalFilesCountLabel.AutoSize = true;
-            this.totalFilesCountLabel.Location = new System.Drawing.Point(329, 221);
+            this.totalFilesCountLabel.Location = new System.Drawing.Point(329, 249);
             this.totalFilesCountLabel.Name = "totalFilesCountLabel";
             this.totalFilesCountLabel.Size = new System.Drawing.Size(86, 15);
             this.totalFilesCountLabel.TabIndex = 7;
@@ -125,11 +128,44 @@
             this.searchButton.UseVisualStyleBackColor = true;
             this.searchButton.Click += new System.EventHandler(this.searchButton_Click);
             // 
+            // pauseButton
+            // 
+            this.pauseButton.Location = new System.Drawing.Point(432, 165);
+            this.pauseButton.Name = "pauseButton";
+            this.pauseButton.Size = new System.Drawing.Size(96, 31);
+            this.pauseButton.TabIndex = 10;
+            this.pauseButton.Text = "❚❚";
+            this.pauseButton.UseVisualStyleBackColor = true;
+            this.pauseButton.Click += new System.EventHandler(this.pauseButton_Click);
+            // 
+            // abortButton
+            // 
+            this.abortButton.Location = new System.Drawing.Point(330, 165);
+            this.abortButton.Name = "abortButton";
+            this.abortButton.Size = new System.Drawing.Size(96, 31);
+            this.abortButton.TabIndex = 11;
+            this.abortButton.Text = "⬛";
+            this.abortButton.UseVisualStyleBackColor = true;
+            this.abortButton.Click += new System.EventHandler(this.abortButton_Click);
+            // 
+            // resumeButton
+            // 
+            this.resumeButton.Location = new System.Drawing.Point(534, 165);
+            this.resumeButton.Name = "resumeButton";
+            this.resumeButton.Size = new System.Drawing.Size(88, 31);
+            this.resumeButton.TabIndex = 12;
+            this.resumeButton.Text = "▶";
+            this.resumeButton.UseVisualStyleBackColor = true;
+            this.resumeButton.Click += new System.EventHandler(this.resumeButtin_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(634, 411);
+            this.Controls.Add(this.resumeButton);
+            this.Controls.Add(this.abortButton);
+            this.Controls.Add(this.pauseButton);
             this.Controls.Add(this.searchButton);
             this.Controls.Add(this.elapsedTimeLabel);
             this.Controls.Add(this.totalFilesCountLabel);
@@ -141,7 +177,7 @@
             this.Controls.Add(this.startDirectoryTextBox);
             this.Controls.Add(this.filesTreeView);
             this.Name = "MainForm";
-            this.Text = "`";
+            this.Text = "Поисковик файлов";
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -159,5 +195,8 @@
         private Label totalFilesCountLabel;
         private Label elapsedTimeLabel;
         private Button searchButton;
+        private Button pauseButton;
+        private Button abortButton;
+        private Button resumeButton;
     }
 }
