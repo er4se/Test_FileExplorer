@@ -17,6 +17,8 @@ namespace Test_FileExplorer
         {
             InitializeComponent();
             Helper.EnableDoubleBuffering(filesTreeView);
+
+            UpdateButtonsCondition();
         }
 
         private void searchButton_Click(object sender, EventArgs e)
@@ -29,12 +31,6 @@ namespace Test_FileExplorer
 
                 // Clear previous search results
                 ClearFormView();
-
-                // Switch buttons availible
-                searchButton.Enabled = false;    //Search - x
-                pauseButton.Enabled = true;      //Pause  - v
-                resumeButton.Enabled = false;    //Resume - x
-                abortButton.Enabled = false;     //Abort  - x
 
                 // Start search and timer in a separated threads
                 Thread searchThread = new Thread(SearchFiles);
@@ -53,32 +49,20 @@ namespace Test_FileExplorer
 
         private void pauseButton_Click(object sender, EventArgs e)
         {
-            searchButton.Enabled = false;    //Search - x
-            pauseButton.Enabled = false;     //Pause  - x
-            resumeButton.Enabled = true;     //Resume - v
-            abortButton.Enabled = true;      //Abort  - v
-
             searchingStatusCode = 2;
+            UpdateButtonsCondition();
         }
 
         private void abortButton_Click(object sender, EventArgs e)
         {
-            searchButton.Enabled = true;     //Search - v
-            pauseButton.Enabled = false;     //Pause  - x
-            resumeButton.Enabled = false;    //Resume - x
-            abortButton.Enabled = false;     //Abort  - x
-
             searchingStatusCode = 0;
+            UpdateButtonsCondition();
         }
 
         private void resumeButtin_Click(object sender, EventArgs e)
         {
-            searchButton.Enabled = false;    //Search - x
-            pauseButton.Enabled = true;      //Pause  - v
-            resumeButton.Enabled = false;    //Resume - x
-            abortButton.Enabled = false;     //Abort  - x
-
             searchingStatusCode = 1;
+            UpdateButtonsCondition();
         }
 
         private void SearchFiles()
@@ -224,15 +208,37 @@ namespace Test_FileExplorer
         private void ClearFormView()
         {
             filesTreeView.Nodes.Clear();
-            searchStatusLabel.Text = "Поиск...";
-            foundFilesCountLabel.Text = "";
-            totalFilesCountLabel.Text = "";
-            elapsedTimeLabel.Text = "";
+            searchStatusLabel.Text = "Текущая директория: ";
+            foundFilesCountLabel.Text = "Найдено файлов: ";
+            totalFilesCountLabel.Text = "Всего файлов: ";
+            elapsedTimeLabel.Text = "Времени прошло: ";
 
-            searchButton.Enabled = true;     //Search - v
-            pauseButton.Enabled = false;     //Pause  - x
-            resumeButton.Enabled = false;    //Resume - x
-            abortButton.Enabled = false;     //Abort  - x
+            UpdateButtonsCondition();
+        }
+
+        private void UpdateButtonsCondition()
+        {
+            switch(searchingStatusCode)
+            {
+                case 0:
+                    searchButton.Enabled = true;
+                    pauseButton.Enabled  = false;
+                    resumeButton.Enabled = false;
+                    abortButton.Enabled  = false;
+                    break;
+                case 1:
+                    searchButton.Enabled = false;
+                    pauseButton.Enabled  = true;
+                    resumeButton.Enabled = false;
+                    abortButton.Enabled  = false;
+                    break;
+                case 2:
+                    searchButton.Enabled = false;
+                    pauseButton.Enabled  = false;
+                    resumeButton.Enabled = true;
+                    abortButton.Enabled  = true;
+                    break;
+            }
         }
     }
 }
