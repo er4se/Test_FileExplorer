@@ -18,6 +18,10 @@ namespace Test_FileExplorer
             InitializeComponent();
             Helper.EnableDoubleBuffering(filesTreeView);
 
+            //Setup TextBoxes
+            startDirectoryTextBox.Text = Properties.Settings.Default.filePath;
+            fileNameRegexTextBox.Text = Properties.Settings.Default.regexPattern;
+
             UpdateButtonsCondition();
         }
 
@@ -25,14 +29,21 @@ namespace Test_FileExplorer
         {
             if ((searchingStatusCode == 0) && (startDirectoryTextBox.Text != String.Empty))
             {
+                // Setup parameters
                 startDirectory = startDirectoryTextBox.Text;
                 fileNameRegex = new Regex(fileNameRegexTextBox.Text);
+
+                // Save user's info
+                Properties.Settings.Default.filePath = startDirectoryTextBox.Text;
+                Properties.Settings.Default.regexPattern = fileNameRegexTextBox.Text;
+                Properties.Settings.Default.Save();
+
                 searchingStatusCode = 1;
 
                 // Clear previous search results
                 ClearFormView();
 
-                // Start search and timer in a separated threads
+                // Start search & timer in a separated threads
                 Thread searchThread = new Thread(SearchFiles);
                 searchThread.IsBackground = true;
                 searchThread.Start();
@@ -125,12 +136,12 @@ namespace Test_FileExplorer
                     }
                     catch (UnauthorizedAccessException)
                     {
-                        //Системная ошибка 5. Отказано в доступе
+                        //System error 5. Access denied
                         continue;
                     }
                     catch (ObjectDisposedException)
                     {
-                        //При срочном закрытии программы во время выполнения поиска, процессор не успевает обработать Dequeue
+                        //Program is shut down during the search
                         continue;
                     }
                     catch (Exception ex)
@@ -142,11 +153,11 @@ namespace Test_FileExplorer
                             ClearFormView();
                         }));
 
-                        MessageBox.Show("Случилась непредвиденная ошибка: " + ex.Message);
+                        MessageBox.Show("An unexpected error has occurred: " + ex.Message);
 
                         Invoke(new Action(() =>
                         {
-                            elapsedTimeLabel.Text = "Времени прошло: ";
+                            elapsedTimeLabel.Text = "Elapsed time: ";
                         }));
 
                         break;
@@ -154,7 +165,7 @@ namespace Test_FileExplorer
                 }
 
                 UpdateSearchStatus(String.Empty, foundFilesCount, totalFilesCount);
-                MessageBox.Show("Поиск завершен!");
+                MessageBox.Show("Search complited!");
             }
             finally
             {
@@ -170,10 +181,12 @@ namespace Test_FileExplorer
             {
                 while (searchingStatusCode == 2)
                 {
+                    //Synchronization of timer indicators
                     startTime = startTime.AddMilliseconds(100);
                     Thread.Sleep(100);
                 }
 
+                //Form update timings
                 Thread.Sleep(25);
                 UpdateElapsedTime(startTime);
             }
@@ -189,9 +202,9 @@ namespace Test_FileExplorer
                 return;
             }
 
-            searchStatusLabel.Text = "Текущая директория: " + currentDirectory;
-            foundFilesCountLabel.Text = "Найдено файлов: " + foundFilesCount;
-            totalFilesCountLabel.Text = "Всего файлов: " + totalFilesCount;
+            searchStatusLabel.Text = "Current directory: " + currentDirectory;
+            foundFilesCountLabel.Text = "Found files: " + foundFilesCount;
+            totalFilesCountLabel.Text = "Total files: " + totalFilesCount;
         }
 
         private void UpdateElapsedTime(DateTime startTime)
@@ -202,16 +215,16 @@ namespace Test_FileExplorer
                 return;
             }
 
-            elapsedTimeLabel.Text = "Времени прошло: " + (DateTime.Now - startTime);
+            elapsedTimeLabel.Text = "Elapsed time: " + (DateTime.Now - startTime);
         }
 
         private void ClearFormView()
         {
             filesTreeView.Nodes.Clear();
-            searchStatusLabel.Text = "Текущая директория: ";
-            foundFilesCountLabel.Text = "Найдено файлов: ";
-            totalFilesCountLabel.Text = "Всего файлов: ";
-            elapsedTimeLabel.Text = "Времени прошло: ";
+            searchStatusLabel.Text = "Current directory: ";
+            foundFilesCountLabel.Text = "Found files: ";
+            totalFilesCountLabel.Text = "Total files: ";
+            elapsedTimeLabel.Text = "Elapsed time: ";
 
             UpdateButtonsCondition();
         }
